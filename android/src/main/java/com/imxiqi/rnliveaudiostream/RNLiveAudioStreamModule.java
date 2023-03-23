@@ -87,6 +87,7 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void start() {
+        if (recorder == null || isRecording) return;
         isRecording = true;
         recorder.startRecording();
 
@@ -110,6 +111,9 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
                     recorder.stop();
                 } catch (Exception e) {
                     e.printStackTrace();
+                } finally {
+                    recorder.release();
+                    recorder = null;
                 }
             }
         });
