@@ -3,14 +3,14 @@ require 'json'
 package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
 
 Pod::Spec.new do |s|
-  s.name           = "RNLiveAudioStream"
+  s.name           = "RNAudioPcmStream"
   s.version        = package['version']
   s.summary        = package['description']
   s.description    = package['description']
   s.license        = package['license']
   s.author         = package['author']
-  s.homepage       = "https://github.com/xiqi/react-native-live-audio-stream"
-  s.source         = { :git => 'https://github.com/xiqi/react-native-live-audio-stream.git' }
+  s.homepage       = "https://github.com/mybigday/react-native-audio-pcm-stream"
+  s.source         = { :git => 'https://github.com/mybigday/react-native-audio-pcm-stream.git' }
 
   s.requires_arc   = true
   s.ios.deployment_target = '8.0'
