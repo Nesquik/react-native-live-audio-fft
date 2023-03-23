@@ -25,7 +25,7 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
     private int audioFormat;
     private int audioSource;
 
-    private AudioRecord recorder;
+    private AudioRecord recorder = null;
     private int bufferSize;
     private boolean isRecording;
 
@@ -40,7 +40,7 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void init(ReadableMap options) {
+    public void init(ReadableMap options, Promise promise) {
         sampleRateInHz = 44100;
         if (options.hasKey("sampleRate")) {
             sampleRateInHz = options.getInt("sampleRate");
@@ -76,6 +76,13 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
 
         int recordingBufferSize = bufferSize * 3;
         recorder = new AudioRecord(audioSource, sampleRateInHz, channelConfig, audioFormat, recordingBufferSize);
+
+        if (recorder.getState() != AudioRecord.STATE_INITIALIZED) {
+            promise.reject("AudioRecord initialization failed");
+            recorder = null;
+        } else {
+            promise.resolve(null);
+        }
     }
 
     @ReactMethod
@@ -111,7 +118,7 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void stop(Promise promise) {
+    public void stop() {
         isRecording = false;
     }
 }
