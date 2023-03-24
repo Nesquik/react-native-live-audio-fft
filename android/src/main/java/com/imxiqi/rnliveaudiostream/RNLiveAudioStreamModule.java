@@ -77,8 +77,9 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
         int recordingBufferSize = bufferSize * 3;
         recorder = new AudioRecord(audioSource, sampleRateInHz, channelConfig, audioFormat, recordingBufferSize);
 
-        if (recorder.getState() != AudioRecord.STATE_INITIALIZED) {
-            promise.reject("AudioRecord initialization failed");
+        int state = recorder.getState();
+        if (state != AudioRecord.STATE_INITIALIZED) {
+            promise.reject("AudioRecord initialization failed, code " + state);
             recorder = null;
         } else {
             promise.resolve(null);
