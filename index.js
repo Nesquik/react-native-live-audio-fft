@@ -93,4 +93,42 @@ function NativeRecordReceivePCM(pcmDataBase64) {
   return {pcmData: pcm, sum};
 }
 
-export {PowerLevel, PowerDBFS, NativeRecordReceivePCM};
+// ref to envIn() in
+// https://github.com/xiangyuecn/Recorder/blob/master/src/recorder-core.js
+// ref to onProcess() in
+// https://github.com/xiangyuecn/Recorder/blob/master/app-support-sample/index.html
+// ref to FrequencyHistogramView.input() in
+// https://github.com/xiangyuecn/Recorder/blob/1.2.23070100/src/extensions/frequency.histogram.view.js
+//
+// e.g.
+// const optionsOfLiveAudioStream = {
+//   sampleRate: 32000,  // default is 44100 but 32000 is adequate for accurate voice recognition
+//   channels: 1,        // 1 or 2, default 1
+//   bitsPerSample: 16,  // 8 or 16, default 16
+//   audioSource: 6,     // android only (see below)
+//   bufferSize: 4096    // default is 2048
+// };
+//
+// LiveAudioStream.init(optionsOfLiveAudioStream);
+//
+// const histogramSet = {
+//   canvas, // e.g. https://github.com/flyskywhy/react-native-gcanvas
+//   ctx,
+//   lineCount: 20,
+//   minHeight: 1,
+//   stripeEnable: false,
+// };
+// const histogram = FrequencyHistogramView(histogramSet);
+//
+// LiveAudioStream.on('data', pcmDataBase64 => {
+//   const {pcmData, sum} = NativeRecordReceivePCM(pcmDataBase64);
+//   histogram.input(
+//     pcmData,
+//     0 /* powerLevel, useless in histogram */,
+//     optionsOfLiveAudioStream.sampleRate,
+//   );
+// });
+// LiveAudioStream.start();
+import FrequencyHistogramView from './frequency.histogram.view';
+
+export {PowerLevel, PowerDBFS, NativeRecordReceivePCM, FrequencyHistogramView};

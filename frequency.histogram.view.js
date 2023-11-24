@@ -1,3 +1,5 @@
+// ref to https://github.com/xiangyuecn/Recorder/blob/1.2.23070100/src/extensions/frequency.histogram.view.js
+
 /*
 录音 Recorder扩展，频率直方图显示
 使用本扩展需要引入lib.fft.js支持，直方图特意优化主要显示0-5khz语音部分（线性），其他高频显示区域较小，不适合用来展示音乐频谱，可自行修改源码恢复成完整的线性频谱，或修改成倍频程频谱（伯德图、对数频谱）；本可视化插件可以移植到其他语言环境，如需定制可联系作者
@@ -8,7 +10,9 @@ https://github.com/xiangyuecn/Recorder
 https://www.iteye.com/topic/851459
 https://sourceforge.net/projects/jmp123/files/
 */
-'use strict';
+
+import {Platform} from 'react-native';
+import LibFFT from './lib.fft';
 
 var FrequencyHistogramView = function (set) {
   return new fn(set);
@@ -17,6 +21,8 @@ var ViewTxt = 'FrequencyHistogramView';
 var fn = function (set) {
   var This = this;
   var o = {
+    canvas, // e.g. https://github.com/flyskywhy/react-native-gcanvas
+    ctx,
     /*
         elem:"css selector" //自动显示到dom，并以此dom大小为显示大小
             //或者配置显示大小，手动把frequencyObj.elem显示到别的地方
@@ -26,9 +32,11 @@ var fn = function (set) {
         以上配置二选一
         */
 
-    scale: 2, //缩放系数，应为正整数，使用2(3? no!)倍宽高进行绘制，避免移动端绘制模糊
+    scale: 1, //缩放系数，应为正整数，使用2(3? no!)倍宽高进行绘制，避免移动端绘制模糊
 
-    fps: 20, //绘制帧率，不可过高
+    asyncFftAtFps: true, // 是否在每个 fps 的点上才计算 fft 而非每来一个 pcm 就计算一次 fft
+    fps: 20, // 绘制帧率，不可过高。影响整体对新 pcm 数据的响应速度，需要 asyncFftAtFps 为 true 才起作用
+    fpsH: 20, // 影响柱子的下降速度，越大下降越快，需要 asyncFftAtFps 为 false 才起作用
 
     lineCount: 30, //直方图柱子数量，数量的多少对性能影响不大，密集运算集中在FFT算法中
     widthRatio: 0.6, //柱子线条宽度占比，为所有柱子占用整个视图宽度的比例，剩下的空白区域均匀插入柱子中间；默认值也基本相当于一根柱子占0.6，一根空白占0.4；设为1不留空白，当视图不足容下所有柱子时也不留空白
@@ -69,62 +77,72 @@ var fn = function (set) {
   }
   This.set = set = o;
 
-  var elem = set.elem;
-  if (elem) {
-    if (typeof elem == 'string') {
-      elem = document.querySelector(elem);
-    } else if (elem.length) {
-      elem = elem[0];
+  if (Platform.os === 'web' && set.canvas === undefined) {
+    var elem = set.elem;
+    if (elem) {
+      if (typeof elem == 'string') {
+        elem = document.querySelector(elem);
+      } else if (elem.length) {
+        elem = elem[0];
+      }
+    }
+    if (elem) {
+      set.width = elem.offsetWidth;
+      set.height = elem.offsetHeight;
+    }
+
+    var scale = set.scale;
+    var width = set.width * scale;
+    var height = set.height * scale;
+    if (!width || !height) {
+      throw new Error(ViewTxt + '无宽高');
+    }
+
+    var thisElem = (This.elem = document.createElement('div'));
+    var lowerCss = [
+      '',
+      'transform-origin:0 0;',
+      'transform:scale(' + 1 / scale + ');',
+    ];
+    thisElem.innerHTML =
+      '<div style="width:' +
+      set.width +
+      'px;height:' +
+      set.height +
+      'px;overflow:hidden"><div style="width:' +
+      width +
+      'px;height:' +
+      height +
+      'px;' +
+      lowerCss.join('-webkit-') +
+      lowerCss.join('-ms-') +
+      lowerCss.join('-moz-') +
+      lowerCss.join('') +
+      '"><canvas/></div></div>';
+
+    var canvas = (This.canvas = thisElem.querySelector('canvas'));
+    var ctx = (This.ctx = canvas.getContext('2d'));
+    canvas.width = width;
+    canvas.height = height;
+
+    if (elem) {
+      elem.innerHTML = '';
+      elem.appendChild(thisElem);
+    }
+  } else {
+    if (set.canvas) {
+      This.canvas = set.canvas;
+      This.ctx = set.ctx ? set.ctx : set.canvas.getContext('2d');
+      set.width = set.width || set.canvas.width;
+      set.height = set.height || set.canvas.height;
+    } else {
+      if (!set.width || !set.height) {
+        throw new Error(ViewTxt + '无 canvas 也无宽高');
+      }
     }
   }
-  if (elem) {
-    set.width = elem.offsetWidth;
-    set.height = elem.offsetHeight;
-  }
 
-  var scale = set.scale;
-  var width = set.width * scale;
-  var height = set.height * scale;
-  if (!width || !height) {
-    throw new Error(ViewTxt + '无宽高');
-  }
-
-  var thisElem = (This.elem = document.createElement('div'));
-  var lowerCss = [
-    '',
-    'transform-origin:0 0;',
-    'transform:scale(' + 1 / scale + ');',
-  ];
-  thisElem.innerHTML =
-    '<div style="width:' +
-    set.width +
-    'px;height:' +
-    set.height +
-    'px;overflow:hidden"><div style="width:' +
-    width +
-    'px;height:' +
-    height +
-    'px;' +
-    lowerCss.join('-webkit-') +
-    lowerCss.join('-ms-') +
-    lowerCss.join('-moz-') +
-    lowerCss.join('') +
-    '"><canvas/></div></div>';
-
-  var canvas = (This.canvas = thisElem.querySelector('canvas'));
-  var ctx = (This.ctx = canvas.getContext('2d'));
-  canvas.width = width;
-  canvas.height = height;
-
-  if (elem) {
-    elem.innerHTML = '';
-    elem.appendChild(thisElem);
-  }
-
-  if (!Recorder.LibFFT) {
-    throw new Error('需要lib.fft.js支持');
-  }
-  This.fft = Recorder.LibFFT(1024);
+  This.fft = LibFFT(1024);
 
   //柱子所在高度
   This.lastH = [];
@@ -151,26 +169,29 @@ fn.prototype = FrequencyHistogramView.prototype = {
   schedule: function () {
     var This = this,
       set = This.set;
-    var interval = Math.floor(1000 / set.fps);
-    if (!This.timer) {
-      This.timer = setInterval(function () {
-        This.schedule();
-      }, interval);
-    }
 
-    var now = Date.now();
-    var drawTime = This.drawTime || 0;
-    if (now - This.inputTime > set.stripeFallDuration * 1.3) {
-      //超时没有输入，顶部横条已全部落下，干掉定时器
-      clearInterval(This.timer);
-      This.timer = 0;
-      return;
+    if (set.asyncFftAtFps) {
+      var interval = Math.floor(1000 / set.fps);
+      if (!This.timer) {
+        This.timer = setInterval(function () {
+          This.schedule();
+        }, interval);
+      }
+
+      var now = Date.now();
+      var drawTime = This.drawTime || 0;
+      if (now - This.inputTime > set.stripeFallDuration * 1.3) {
+        //超时没有输入，顶部横条已全部落下，干掉定时器
+        clearInterval(This.timer);
+        This.timer = 0;
+        return;
+      }
+      if (now - drawTime < interval) {
+        //没到间隔时间，不绘制
+        return;
+      }
+      This.drawTime = now;
     }
-    if (now - drawTime < interval) {
-      //没到间隔时间，不绘制
-      return;
-    }
-    This.drawTime = now;
 
     //调用FFT计算频率数据
     var bufferSize = This.fft.bufferSize;
@@ -213,10 +234,9 @@ fn.prototype = FrequencyHistogramView.prototype = {
 
     var lastH = This.lastH;
     var stripesH = This.stripesH;
-    var speed = Math.ceil(heightY / (set.fallDuration / (1000 / set.fps)));
-    var stripeSpeed = Math.ceil(
-      heightY / (set.stripeFallDuration / (1000 / set.fps)),
-    );
+    var duration = 1000 / (set.asyncFftAtFps ? set.fps : set.fpsH);
+    var speed = Math.ceil(heightY / (set.fallDuration / duration));
+    var stripeSpeed = Math.ceil(heightY / (set.stripeFallDuration / duration));
     var stripeMargin = set.stripeMargin * scale;
 
     var Y0 = 1 << (Math.round(Math.log(bufferSize) / Math.log(2) + 3) << 1);
@@ -400,4 +420,5 @@ fn.prototype = FrequencyHistogramView.prototype = {
     set.onDraw(frequencyData, sampleRate);
   },
 };
-Recorder[ViewTxt] = FrequencyHistogramView;
+
+export default FrequencyHistogramView;
