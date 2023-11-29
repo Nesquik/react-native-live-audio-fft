@@ -79,6 +79,8 @@ function PowerDBFS(maxSample) {
 
 // ref to NativeRecordReceivePCM() in
 // https://github.com/xiangyuecn/Recorder/blob/master/src/app-support/app-native-support.js
+// pcmData: array of pcm Int16
+// sum: sum of all abs pcm Int16
 function NativeRecordReceivePCM(pcmDataBase64) {
   let bstr = atob(pcmDataBase64);
   let n = bstr.length;
@@ -93,61 +95,6 @@ function NativeRecordReceivePCM(pcmDataBase64) {
   return {pcmData: pcm, sum};
 }
 
-// ref to envIn() in
-// https://github.com/xiangyuecn/Recorder/blob/master/src/recorder-core.js
-// ref to onProcess() in
-// https://github.com/xiangyuecn/Recorder/blob/master/app-support-sample/index.html
-// ref to FrequencyHistogramView.input() in
-// https://github.com/xiangyuecn/Recorder/blob/1.2.23070100/src/extensions/frequency.histogram.view.js
-//
-// e.g.
-// const optionsOfLiveAudioStream = {
-//   sampleRate: 32000,  // default is 44100 but 32000 is adequate for accurate voice recognition
-//   channels: 1,        // 1 or 2, default 1
-//   bitsPerSample: 16,  // 8 or 16, default 16
-//   audioSource: 1,     // android only (see below)
-//   bufferSize: 4096    // default is 2048
-// };
-//
-// LiveAudioStream.init(optionsOfLiveAudioStream);
-//
-// const histogramSet = {
-//   canvas, // e.g. https://github.com/flyskywhy/react-native-gcanvas
-//   ctx,
-//   width, // if canvas is not defined, at least must define width and height
-//   height, // if canvas is defined, it is allowed to not define width and height
-//   asyncFftAtFps: false,
-//   lineCount: 20,
-//   minHeight: 1,
-//   stripeEnable: false,
-// };
-// const histogram = FrequencyHistogramView(histogramSet);
-//
-// LiveAudioStream.on('data', pcmDataBase64 => {
-//   const {pcmData, sum} = NativeRecordReceivePCM(pcmDataBase64);
-//   const frequencyData = histogram.input(
-//     pcmData,
-//     0 /* powerLevel, useless in histogram */,
-//     optionsOfLiveAudioStream.sampleRate,
-//   );
-//   if (histogram.set.asyncFftAtFps === false) {
-//     if (histogram.set.canvas) {
-//       // draw() will invoke frequencyData2H() automatically then draw
-//       // on histogram.set.canvas
-//       histogram.draw(frequencyData, optionsOfLiveAudioStream.sampleRate);
-//     } else if (histogram.set.width && histogram.set.height) {
-//       const {lastH} = histogram.frequencyData2H({
-//         frequencyData,
-//         sampleRate: config.liveAudioStream.sampleRate,
-//       });
-//       // then your custom canvas or other usecase can use lastH which
-//       // is an array of height (max is histogram.set.height) on every
-//       // (count is histogram.set.lineCount) frequency
-//       // ...
-//     }
-//   }
-// });
-// LiveAudioStream.start();
 import FrequencyHistogramView from './frequency.histogram.view';
 
 export {PowerLevel, PowerDBFS, NativeRecordReceivePCM, FrequencyHistogramView};

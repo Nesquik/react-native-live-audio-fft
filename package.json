@@ -1,28 +1,41 @@
 {
-  "name": "@fugood/react-native-audio-pcm-stream",
+  "name": "react-native-live-audio-fft",
   "version": "1.1.4",
-  "description": "Get audio PCM stream data for React Native",
+  "description": "Get live audio PCM stream data then can fft to frequency histogram for React Native",
   "license": "MIT",
   "keywords": [
+    "@flyskywhy/react-native-gcanvas",
+    "audio",
+    "canvas",
+    "fft",
+    "frequency",
+    "frequency histogram",
+    "histogram",
+    "live",
     "live stream",
     "react-native",
-    "audio",
-    "live",
     "recording",
+    "pcm",
     "voice",
-    "pcm"
+    "waveform"
   ],
   "main": "index.js",
-  "homepage": "https://github.com/mybigday/react-native-audio-pcm-stream",
+  "homepage": "https://github.com/flyskywhy/react-native-live-audio-fft",
   "bugs": {
-    "url": "https://github.com/mybigday/react-native-audio-pcm-stream/issues",
-    "email": "dev@bricks.tools"
+    "url": "https://github.com/flyskywhy/react-native-live-audio-fft/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mybigday/react-native-audio-pcm-stream.git"
+    "url": "https://github.com/flyskywhy/react-native-live-audio-fft.git"
   },
   "author": "Qi Xi <me@imxiqi.com> (https://www.imxiqi.com/)",
+  "contributors": [
+    {
+      "name": "Li Zheng",
+      "email": "flyskywhy@gmail.com",
+      "url": "https://github.com/flyskywhy"
+    }
+  ],
   "devDependencies": {
     "babel-eslint": "^8.2.3",
     "eslint": "^4.19.1",

@@ -1,8 +1,11 @@
+# react-native-live-audio-fft
 
-# react-native-live-audio-stream
-[![npm](https://img.shields.io/npm/v/react-native-live-audio-stream)](https://www.npmjs.com/package/react-native-live-audio-stream)
+[![npm version](http://img.shields.io/npm/v/react-native-slider-color-picker.svg?style=flat-square)](https://npmjs.org/package/react-native-slider-color-picker "View this project on npm")
+[![npm downloads](http://img.shields.io/npm/dm/react-native-slider-color-picker.svg?style=flat-square)](https://npmjs.org/package/react-native-slider-color-picker "View this project on npm")
+[![npm licence](http://img.shields.io/npm/l/react-native-slider-color-picker.svg?style=flat-square)](https://npmjs.org/package/react-native-slider-color-picker "View this project on npm")
+[![Platform](https://img.shields.io/badge/platform-ios%20%7C%20android-989898.svg?style=flat-square)](https://npmjs.org/package/react-native-slider-color-picker "View this project on npm")
 
-Get live audio stream data for React Native. Ideal for live voice recognition (transcribing).
+Get live audio PCM stream data then can fft to frequency histogram for React Native. Ideal for drawing live music frequency histogram.
 
 This module is modified from [react-native-audio-record](https://github.com/goodatlas/react-native-audio-record). Instead of saving to an audio file, it only emit events with live data. By doing this, it can reduce memory usage and eliminate file operation overheads in the case that an audio file is not necessary (e.g. live transcribing).
 
@@ -10,7 +13,7 @@ Most of the code was written by the respective original authors.
 
 ## Install
 ```
-yarn add react-native-live-audio-stream
+yarn add react-native-live-audio-fft
 cd ios
 pod install
 ```
@@ -32,19 +35,66 @@ Add the following line to ```android/app/src/main/AndroidManifest.xml```
 
 ## Usage
 ```javascript
-import LiveAudioStream from 'react-native-live-audio-stream';
+import LiveAudioStream, {
+  PowerLevel,
+  NativeRecordReceivePCM,
+  FrequencyHistogramView,
+} 'react-native-live-audio-fft';
 
-const options = {
-  sampleRate: 32000,  // default is 44100 but 32000 is adequate for accurate voice recognition
+const optionsOfLiveAudioStream = {
+  sampleRate: 32000,  // default is 44100 but 32000 is adequate for accurate voice recognition, maybe even music
   channels: 1,        // 1 or 2, default 1
   bitsPerSample: 16,  // 8 or 16, default 16
-  audioSource: 6,     // android only (see below)
+  audioSource: 1,     // android only (see below), 1 for music, 6 for voice recognition, default is 6
   bufferSize: 4096    // default is 2048
 };
 
-LiveAudioStream.init(options);
-LiveAudioStream.on('data', data => {
-  // base64-encoded audio data chunks
+LiveAudioStream.init(optionsOfLiveAudioStream);
+
+const histogramSet = {
+  canvas, // e.g. https://github.com/flyskywhy/react-native-gcanvas
+  ctx,
+  width, // if canvas is not defined, at least must define width and height
+  height, // if canvas is defined, it is allowed to not define width and height
+  asyncFftAtFps: false,
+  lineCount: 20,
+  minHeight: 1,
+  stripeEnable: false,
+};
+const histogram = FrequencyHistogramView(histogramSet);
+
+LiveAudioStream.on('data', pcmDataBase64 => {
+  const {pcmData, sum} = NativeRecordReceivePCM(pcmDataBase64);
+  // const powerLevel = PowerLevel(sum, pcmData.length);
+
+  // ref to envIn() in
+  // https://github.com/xiangyuecn/Recorder/blob/master/src/recorder-core.js
+  // ref to onProcess() in
+  // https://github.com/xiangyuecn/Recorder/blob/master/app-support-sample/index.html
+  // ref to FrequencyHistogramView.input() in
+  // https://github.com/xiangyuecn/Recorder/blob/1.2.23070100/src/extensions/frequency.histogram.view.js
+  const frequencyData = histogram.input(
+    pcmData,
+    0 /* powerLevel, useless in histogram */,
+    optionsOfLiveAudioStream.sampleRate,
+  );
+
+  if (histogram.set.asyncFftAtFps === false) {
+    if (histogram.set.canvas) {
+      // draw() will invoke frequencyData2H() automatically then draw
+      // on histogram.set.canvas
+      histogram.draw(frequencyData, optionsOfLiveAudioStream.sampleRate);
+    } else if (histogram.set.width && histogram.set.height) {
+      const {lastH} = histogram.frequencyData2H({
+        frequencyData,
+        sampleRate: config.liveAudioStream.sampleRate,
+      });
+      // then your custom canvas or other usecase can use lastH which
+      // is an array of height (max is histogram.set.height) on every
+      // (count is histogram.set.lineCount) frequency
+      // ...
+    }
+  }
 });
   ...
 LiveAudioStream.start();
@@ -55,16 +105,6 @@ LiveAudioStream.stop();
 
 `audioSource` should be one of the constant values from [here](https://developer.android.com/reference/android/media/MediaRecorder.AudioSource). Default value is `6` (`VOICE_RECOGNITION`).
 
-Use 3rd-party modules like [buffer](https://www.npmjs.com/package/buffer) to decode base64 data. Example:
-```javascript
-// yarn add buffer
-import { Buffer } from 'buffer';
-  ...
-LiveAudioStream.on('data', data => {
-  var chunk = Buffer.from(data, 'base64');
-});
-```
-
 ## Credits/References
 - [react-native-audio-record](https://github.com/goodatlas/react-native-audio-record)
 - iOS [Audio Queues](https://developer.apple.com/library/content/documentation/MusicAudio/Conceptual/AudioQueueProgrammingGuide)
@@ -73,6 +113,7 @@ LiveAudioStream.on('data', data => {
 - [react-native-recording](https://github.com/qiuxiang/react-native-recording)
 - [SpeakHere](https://github.com/shaojiankui/SpeakHere)
 - [ringdroid](https://github.com/google/ringdroid)
+- [recorder-core](https://github.com/xiangyuecn/Recorder)
 
-## License 
+## License
 MIT
