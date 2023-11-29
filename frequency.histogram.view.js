@@ -212,10 +212,9 @@ fn.prototype = FrequencyHistogramView.prototype = {
       return frequencyData;
     }
   },
-  draw: function (frequencyData, sampleRate) {
+  frequencyData2H: function ({frequencyData, sampleRate}) {
     var This = this,
       set = This.set;
-    var ctx = This.ctx;
     var scale = set.scale;
     var width = set.width * scale;
     var height = set.height * scale;
@@ -310,7 +309,23 @@ fn.prototype = FrequencyHistogramView.prototype = {
       }
     }
 
+    return {lastH, stripesH, originY, heightY};
+  },
+  draw: function (frequencyData, sampleRate) {
+    var This = this,
+      set = This.set;
+    var scale = set.scale;
+    var width = set.width * scale;
+    var height = set.height * scale;
+    var lineCount = set.lineCount;
+
+    const {lastH, stripesH, originY, heightY} = This.frequencyData2H({
+      frequencyData,
+      sampleRate,
+    });
+
     //开始绘制图形
+    var ctx = This.ctx;
     ctx.clearRect(0, 0, width, height);
 
     var linear1 = This.genLinear(ctx, set.linear, originY, originY - heightY); //上半部分的填充

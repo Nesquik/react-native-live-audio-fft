@@ -114,6 +114,8 @@ function NativeRecordReceivePCM(pcmDataBase64) {
 // const histogramSet = {
 //   canvas, // e.g. https://github.com/flyskywhy/react-native-gcanvas
 //   ctx,
+//   width, // if canvas is not defined, at least must define width and height
+//   height, // if canvas is defined, it is allowed to not define width and height
 //   asyncFftAtFps: false,
 //   lineCount: 20,
 //   minHeight: 1,
@@ -129,7 +131,20 @@ function NativeRecordReceivePCM(pcmDataBase64) {
 //     optionsOfLiveAudioStream.sampleRate,
 //   );
 //   if (histogram.set.asyncFftAtFps === false) {
-//     histogram.draw(frequencyData, optionsOfLiveAudioStream.sampleRate);
+//     if (histogram.set.canvas) {
+//       // draw() will invoke frequencyData2H() automatically then draw
+//       // on histogram.set.canvas
+//       histogram.draw(frequencyData, optionsOfLiveAudioStream.sampleRate);
+//     } else if (histogram.set.width && histogram.set.height) {
+//       const {lastH} = histogram.frequencyData2H({
+//         frequencyData,
+//         sampleRate: config.liveAudioStream.sampleRate,
+//       });
+//       // then your custom canvas or other usecase can use lastH which
+//       // is an array of height (max is histogram.set.height) on every
+//       // (count is histogram.set.lineCount) frequency
+//       // ...
+//     }
 //   }
 // });
 // LiveAudioStream.start();
