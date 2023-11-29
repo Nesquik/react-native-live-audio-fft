@@ -1,6 +1,6 @@
 {
   "name": "react-native-live-audio-fft",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "description": "Get live audio PCM stream data then can fft to frequency histogram for React Native",
   "license": "MIT",
   "keywords": [
