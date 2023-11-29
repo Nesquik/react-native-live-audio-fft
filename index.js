@@ -114,6 +114,7 @@ function NativeRecordReceivePCM(pcmDataBase64) {
 // const histogramSet = {
 //   canvas, // e.g. https://github.com/flyskywhy/react-native-gcanvas
 //   ctx,
+//   asyncFftAtFps: false,
 //   lineCount: 20,
 //   minHeight: 1,
 //   stripeEnable: false,
@@ -122,11 +123,14 @@ function NativeRecordReceivePCM(pcmDataBase64) {
 //
 // LiveAudioStream.on('data', pcmDataBase64 => {
 //   const {pcmData, sum} = NativeRecordReceivePCM(pcmDataBase64);
-//   histogram.input(
+//   const frequencyData = histogram.input(
 //     pcmData,
 //     0 /* powerLevel, useless in histogram */,
 //     optionsOfLiveAudioStream.sampleRate,
 //   );
+//   if (histogram.set.asyncFftAtFps === false) {
+//     histogram.draw(frequencyData, optionsOfLiveAudioStream.sampleRate);
+//   }
 // });
 // LiveAudioStream.start();
 import FrequencyHistogramView from './frequency.histogram.view';

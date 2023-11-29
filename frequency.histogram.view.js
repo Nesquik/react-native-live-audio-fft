@@ -164,7 +164,7 @@ fn.prototype = FrequencyHistogramView.prototype = {
     This.pcmPos = 0;
 
     This.inputTime = Date.now();
-    This.schedule();
+    return This.schedule();
   },
   schedule: function () {
     var This = this,
@@ -205,8 +205,12 @@ fn.prototype = FrequencyHistogramView.prototype = {
 
     var frequencyData = This.fft.transform(arr);
 
-    //推入绘制
-    This.draw(frequencyData, This.sampleRate);
+    if (set.asyncFftAtFps) {
+      //推入绘制
+      This.draw(frequencyData, This.sampleRate);
+    } else {
+      return frequencyData;
+    }
   },
   draw: function (frequencyData, sampleRate) {
     var This = this,
