@@ -39,7 +39,7 @@ import LiveAudioStream, {
   PowerLevel,
   NativeRecordReceivePCM,
   FrequencyHistogramView,
-} 'react-native-live-audio-fft';
+} from 'react-native-live-audio-fft';
 
 const optionsOfLiveAudioStream = {
   sampleRate: 32000,  // default is 44100 but 32000 is adequate for accurate voice recognition, maybe even music
@@ -51,6 +51,8 @@ const optionsOfLiveAudioStream = {
 
 LiveAudioStream.init(optionsOfLiveAudioStream);
 
+// ref to initWaveStore() in
+// https://github.com/xiangyuecn/Recorder/blob/master/app-support-sample/index.html
 const histogramSet = {
   canvas, // e.g. https://github.com/flyskywhy/react-native-gcanvas
   ctx,
