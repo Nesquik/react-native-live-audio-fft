@@ -32,7 +32,7 @@ var fn = function (set) {
         以上配置二选一
         */
 
-    scale: 1, //缩放系数，应为正整数，使用2(3? no!)倍宽高进行绘制，避免移动端绘制模糊
+    scale: 1, // 缩放系数，使用 scale 倍宽高进行绘制，用于避免移动端绘制模糊，不过直方图都是直线，不存在模糊问题，所以设为 1 最方便
 
     asyncFftAtFps: true, // 是否在每个 fps 的点上才计算 fft 而非每来一个 pcm 就计算一次 fft
     fps: 20, // 绘制帧率，不可过高。影响整体对新 pcm 数据的响应速度，需要 asyncFftAtFps 为 true 才起作用

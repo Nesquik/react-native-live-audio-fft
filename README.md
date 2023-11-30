@@ -35,6 +35,11 @@ Add the following line to ```android/app/src/main/AndroidManifest.xml```
 
 ## Usage
 ```javascript
+import {PixelRatio, Platform} from 'react-native';
+import {GCanvasView} from '@flyskywhy/react-native-gcanvas';
+if (Platform.OS !== 'web') {
+  var {PERMISSIONS, request} = require('react-native-permissions').default;
+}
 import LiveAudioStream, {
   PowerLevel,
   NativeRecordReceivePCM,
@@ -49,7 +54,7 @@ const optionsOfLiveAudioStream = {
   bufferSize: 4096    // default is 2048
 };
 
-LiveAudioStream.init(optionsOfLiveAudioStream);
+const histogramSetScale = 1; // if is not 1, e.g. PixelRatio.get(), you should define devicePixelRatio of <GCanvasView/> (see below)
 
 // ref to initWaveStore() in
 // https://github.com/xiangyuecn/Recorder/blob/master/app-support-sample/index.html
@@ -58,7 +63,8 @@ const histogramSet = {
   ctx,
   width, // if canvas is not defined, at least must define width and height
   height, // if canvas is defined, it is allowed to not define width and height
-  asyncFftAtFps: false,
+  scale: histogramSetScale, // if histogramSetScale is 1, you can remove this line because default is 1
+  asyncFftAtFps: false, // default is true, if you want draw on every onAudioPcmData(), you should set it to false
   lineCount: 20,
   minHeight: 1,
   stripeEnable: false,
@@ -99,11 +105,33 @@ LiveAudioStream.on('data', pcmDataBase64 => {
   }
 });
   ...
-LiveAudioStream.start();
+  startAudioRecoder = async () => {
+    const status = await request(
+      Platform.select({
+        android: PERMISSIONS.ANDROID.RECORD_AUDIO,
+        ios: PERMISSIONS.IOS.MICROPHONE,
+      }),
+    );
+    if (status === 'granted') {
+      LiveAudioStream.stop();
+      LiveAudioStream.init(optionsOfLiveAudioStream);
+      LiveAudioStream.start();
+    }
+  };
+
+  stopAudioRecoder = () => {
+    LiveAudioStream.stop();
+  };
   ...
-LiveAudioStream.stop();
+          <GCanvasView
+            ...
+            // devicePixelRatio={PixelRatio.get() / histogramSetScale /* if histogramSetScale is 1, you can remove this line because default is PixelRatio.get() */}
+            ...
+          />
   ...
 ```
+
+More examples can ref to [GCanvasRNExamples](https://github.com/flyskywhy/GCanvasRNExamples).
 
 `audioSource` should be one of the constant values from [here](https://developer.android.com/reference/android/media/MediaRecorder.AudioSource). Default value is `6` (`VOICE_RECOGNITION`).
 
