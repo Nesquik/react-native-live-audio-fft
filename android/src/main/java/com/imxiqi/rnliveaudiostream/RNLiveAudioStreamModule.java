@@ -6,7 +6,6 @@ import android.media.MediaRecorder.AudioSource;
 import android.util.Base64;
 import android.util.Log;
 
-import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -18,16 +17,7 @@ import java.lang.Math;
 public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
 
     private final ReactApplicationContext reactContext;
-    private DeviceEventManagerModule.RCTDeviceEventEmitter eventEmitter;
-
-    private int sampleRateInHz;
-    private int channelConfig;
-    private int audioFormat;
-    private int audioSource;
-
-    private AudioRecord recorder = null;
-    private int bufferSize;
-    private boolean isRecording;
+    private RecordThread recordThread;
 
     public RNLiveAudioStreamModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -40,90 +30,100 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void init(ReadableMap options, Promise promise) {
-        sampleRateInHz = 44100;
+    public void init(ReadableMap options) {
+        int sampleRateInHz = 44100;
         if (options.hasKey("sampleRate")) {
             sampleRateInHz = options.getInt("sampleRate");
         }
 
-        channelConfig = AudioFormat.CHANNEL_IN_MONO;
+        int channelConfig = AudioFormat.CHANNEL_IN_MONO;
         if (options.hasKey("channels")) {
             if (options.getInt("channels") == 2) {
                 channelConfig = AudioFormat.CHANNEL_IN_STEREO;
             }
         }
 
-        audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+        int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
         if (options.hasKey("bitsPerSample")) {
             if (options.getInt("bitsPerSample") == 8) {
                 audioFormat = AudioFormat.ENCODING_PCM_8BIT;
             }
         }
 
-        audioSource = AudioSource.VOICE_RECOGNITION;
+        int audioSource = AudioSource.VOICE_RECOGNITION;
         if (options.hasKey("audioSource")) {
             audioSource = options.getInt("audioSource");
         }
 
-        isRecording = false;
-        eventEmitter = reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class);
-
-        bufferSize = AudioRecord.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat);
+        int bufferSize = AudioRecord.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat);
 
         if (options.hasKey("bufferSize")) {
             bufferSize = Math.max(bufferSize, options.getInt("bufferSize"));
         }
 
-        int recordingBufferSize = bufferSize * 3;
-        recorder = new AudioRecord(audioSource, sampleRateInHz, channelConfig, audioFormat, recordingBufferSize);
+        recordThread = new RecordThread(audioSource, sampleRateInHz, channelConfig, audioFormat, bufferSize, reactContext);
+    }
 
-        int state = recorder.getState();
-        if (state != AudioRecord.STATE_INITIALIZED) {
-            promise.reject("AudioRecord initialization failed, code " + state);
-            recorder = null;
-        } else {
-            promise.resolve(null);
+    private class RecordThread extends Thread {
+
+        private DeviceEventManagerModule.RCTDeviceEventEmitter eventEmitter;
+        private AudioRecord recorder = null;
+        private int bufferSize;
+        public boolean isRecording = false;
+
+        public RecordThread(int audioSource, int sampleRateInHz, int channelConfig, int audioFormat, int bufferSize, ReactApplicationContext reactContext) {
+            super();
+
+            eventEmitter = reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class);
+
+            this.bufferSize = bufferSize;
+            int recordingBufferSize = bufferSize * 3;
+            recorder = new AudioRecord(audioSource, sampleRateInHz, channelConfig, audioFormat, recordingBufferSize);
+        }
+
+        public void run() {
+            recorder.startRecording();
+
+            try {
+                int bytesRead;
+                int count = 0;
+                String base64Data;
+                byte[] buffer = new byte[bufferSize];
+
+                while (isRecording) {
+                    bytesRead = recorder.read(buffer, 0, buffer.length);
+
+                    // skip first 2 buffers to eliminate "click sound"
+                    if (bytesRead > 0 && ++count > 2) {
+                        base64Data = Base64.encodeToString(buffer, Base64.NO_WRAP);
+                        eventEmitter.emit("data", base64Data);
+                    }
+                }
+                recorder.stop();
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                recorder.release();
+                recorder = null;
+            }
         }
     }
 
     @ReactMethod
     public void start() {
-        if (recorder == null || isRecording) return;
-        isRecording = true;
-        recorder.startRecording();
+        if (recordThread == null || recordThread.isRecording) {
+            return;
+        }
 
-        Thread recordingThread = new Thread(new Runnable() {
-            public void run() {
-                try {
-                    int bytesRead;
-                    int count = 0;
-                    String base64Data;
-                    byte[] buffer = new byte[bufferSize];
-
-                    while (isRecording) {
-                        bytesRead = recorder.read(buffer, 0, buffer.length);
-
-                        // skip first 2 buffers to eliminate "click sound"
-                        if (bytesRead > 0 && ++count > 2) {
-                            base64Data = Base64.encodeToString(buffer, Base64.NO_WRAP);
-                            eventEmitter.emit("data", base64Data);
-                        }
-                    }
-                    recorder.stop();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    recorder.release();
-                    recorder = null;
-                }
-            }
-        });
-
-        recordingThread.start();
+        recordThread.isRecording = true;
+        recordThread.start();
     }
 
     @ReactMethod
     public void stop() {
-        isRecording = false;
+        if (recordThread != null) {
+            recordThread.isRecording = false;
+            recordThread = null;
+        }
     }
 }
