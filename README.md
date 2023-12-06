@@ -130,6 +130,9 @@ LiveAudioStream.on('data', pcmDataBase64 => {
           />
   ...
 ```
+* GIF of [Audio Frequency Histogram](https://github.com/flyskywhy/GCanvasRNExamples/blob/master/app/components/AudioFrequencyHistogram.js)
+
+<img src="https://raw.githubusercontent.com/flyskywhy/GCanvasRNExamples/master/assets/AudioFrequencyHistogram.gif" width="480">
 
 More examples can ref to [GCanvasRNExamples](https://github.com/flyskywhy/GCanvasRNExamples).
 
