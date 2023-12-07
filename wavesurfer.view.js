@@ -1,3 +1,5 @@
+// ref to https://github.com/xiangyuecn/Recorder/blob/1.2.23070100/src/extensions/wavesurfer.view.js
+
 /*
 录音 Recorder扩展，音频可视化波形显示
 
@@ -8,7 +10,8 @@ https://github.com/katspaugh/wavesurfer.js https://github.com/collab-project/vid
 
 本扩展的波形绘制直接简单的使用PCM的采样数值大小来进行线条的绘制，同一段音频绘制出的波形和Audition内显示的波形外观上几乎没有差异。
 */
-'use strict';
+
+import {Platform} from 'react-native';
 
 var WaveSurferView = function (set) {
   return new fn(set);
@@ -17,6 +20,10 @@ var ViewTxt = 'WaveSurferView';
 var fn = function (set) {
   var This = this;
   var o = {
+    canvas, // e.g. https://github.com/flyskywhy/react-native-gcanvas
+    ctx,
+    canvas2, // e.g. https://github.com/flyskywhy/react-native-gcanvas with offscreenCanvas={true}
+    ctx2,
     /*
         elem:"css selector" //自动显示到dom，并以此dom大小为显示大小
             //或者配置显示大小，手动把surferObj.elem显示到别的地方
@@ -26,9 +33,9 @@ var fn = function (set) {
         以上配置二选一
         */
 
-    scale: 2, //缩放系数，应为正整数，使用2(3? no!)倍宽高进行绘制，避免移动端绘制模糊
+    scale: 1, // 缩放系数，最好设为 1
 
-    fps: 50, //绘制帧率，不可过高，50-60fps运动性质动画明显会流畅舒适，实际显示帧率达不到这个值也并无太大影响
+    fps: 20, // 绘制帧率，不可过高，否则 https://github.com/flyskywhy/react-native-gcanvas 反而会更卡
 
     duration: 2500, //当前视图窗口内最大绘制的波形的持续时间，此处决定了移动速率
     direction: 1, //波形前进方向，取值：1由左往右，-1由右往左
@@ -52,61 +59,77 @@ var fn = function (set) {
   }
   This.set = set = o;
 
-  var elem = set.elem;
-  if (elem) {
-    if (typeof elem == 'string') {
-      elem = document.querySelector(elem);
-    } else if (elem.length) {
-      elem = elem[0];
+  if (Platform.os === 'web' && set.canvas === undefined) {
+    var elem = set.elem;
+    if (elem) {
+      if (typeof elem == 'string') {
+        elem = document.querySelector(elem);
+      } else if (elem.length) {
+        elem = elem[0];
+      }
     }
-  }
-  if (elem) {
-    set.width = elem.offsetWidth;
-    set.height = elem.offsetHeight;
-  }
+    if (elem) {
+      set.width = elem.offsetWidth;
+      set.height = elem.offsetHeight;
+    }
 
-  var scale = set.scale;
-  var width = set.width * scale;
-  var height = set.height * scale;
-  if (!width || !height) {
-    throw new Error(ViewTxt + '无宽高');
-  }
+    var scale = set.scale;
+    var width = set.width * scale;
+    var height = set.height * scale;
+    if (!width || !height) {
+      throw new Error(ViewTxt + '无宽高');
+    }
 
-  var thisElem = (This.elem = document.createElement('div'));
-  var lowerCss = [
-    '',
-    'transform-origin:0 0;',
-    'transform:scale(' + 1 / scale + ');',
-  ];
-  thisElem.innerHTML =
-    '<div style="width:' +
-    set.width +
-    'px;height:' +
-    set.height +
-    'px;overflow:hidden"><div style="width:' +
-    width +
-    'px;height:' +
-    height +
-    'px;' +
-    lowerCss.join('-webkit-') +
-    lowerCss.join('-ms-') +
-    lowerCss.join('-moz-') +
-    lowerCss.join('') +
-    '"><canvas/></div></div>';
+    var thisElem = (This.elem = document.createElement('div'));
+    var lowerCss = [
+      '',
+      'transform-origin:0 0;',
+      'transform:scale(' + 1 / scale + ');',
+    ];
+    thisElem.innerHTML =
+      '<div style="width:' +
+      set.width +
+      'px;height:' +
+      set.height +
+      'px;overflow:hidden"><div style="width:' +
+      width +
+      'px;height:' +
+      height +
+      'px;' +
+      lowerCss.join('-webkit-') +
+      lowerCss.join('-ms-') +
+      lowerCss.join('-moz-') +
+      lowerCss.join('') +
+      '"><canvas/></div></div>';
 
-  var canvas = (This.canvas = thisElem.querySelector('canvas'));
-  var ctx = (This.ctx = canvas.getContext('2d'));
-  canvas.width = width;
-  canvas.height = height;
+    var canvas = (This.canvas = thisElem.querySelector('canvas'));
+    var ctx = (This.ctx = canvas.getContext('2d'));
+    canvas.width = width;
+    canvas.height = height;
 
-  var canvas2 = (This.canvas2 = document.createElement('canvas'));
-  var ctx2 = (This.ctx2 = canvas2.getContext('2d'));
-  canvas2.width = width * 2; //卷轴，后台绘制画布能容纳两块窗口内容，进行无缝滚动
-  canvas2.height = height;
+    var canvas2 = (This.canvas2 = document.createElement('canvas'));
+    var ctx2 = (This.ctx2 = canvas2.getContext('2d'));
+    canvas2.width = width * 2; //卷轴，后台绘制画布能容纳两块窗口内容，进行无缝滚动
+    canvas2.height = height;
 
-  if (elem) {
-    elem.innerHTML = '';
-    elem.appendChild(thisElem);
+    if (elem) {
+      elem.innerHTML = '';
+      elem.appendChild(thisElem);
+    }
+  } else {
+    if (set.canvas && set.canvas2) {
+      This.canvas = set.canvas;
+      This.ctx = set.ctx ? set.ctx : set.canvas.getContext('2d');
+      set.width = set.width || set.canvas.width;
+      set.height = set.height || set.canvas.height;
+
+      This.canvas2 = set.canvas2;
+      This.ctx2 = set.ctx2 ? set.ctx2 : set.canvas2.getContext('2d');
+    } else {
+      if (!set.width || !set.height) {
+        throw new Error(ViewTxt + '无 canvas 也无宽高');
+      }
+    }
   }
 
   This.x = 0;
@@ -316,4 +339,5 @@ fn.prototype = WaveSurferView.prototype = {
     }
   },
 };
-Recorder[ViewTxt] = WaveSurferView;
+
+export default WaveSurferView;

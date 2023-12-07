@@ -96,5 +96,6 @@ function NativeRecordReceivePCM(pcmDataBase64) {
 }
 
 import FrequencyHistogramView from './frequency.histogram.view';
+import WaveSurferView from './wavesurfer.view';
 
-export {PowerLevel, PowerDBFS, NativeRecordReceivePCM, FrequencyHistogramView};
+export {PowerLevel, PowerDBFS, NativeRecordReceivePCM, FrequencyHistogramView, WaveSurferView};
