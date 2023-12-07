@@ -95,7 +95,7 @@ LiveAudioStream.on('data', pcmDataBase64 => {
     } else if (histogram.set.width && histogram.set.height) {
       const {lastH} = histogram.frequencyData2H({
         frequencyData,
-        sampleRate: config.liveAudioStream.sampleRate,
+        sampleRate: optionsOfLiveAudioStream.sampleRate,
       });
       // then your custom canvas or other usecase can use lastH which
       // is an array of height (max is histogram.set.height) on every
