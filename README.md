@@ -5,7 +5,7 @@
 [![npm licence](http://img.shields.io/npm/l/react-native-live-audio-fft.svg?style=flat-square)](https://npmjs.org/package/react-native-live-audio-fft "View this project on npm")
 [![Platform](https://img.shields.io/badge/platform-ios%20%7C%20android-989898.svg?style=flat-square)](https://npmjs.org/package/react-native-live-audio-fft "View this project on npm")
 
-Get live audio PCM stream data then can fft to frequency histogram for React Native. Ideal for drawing live music frequency histogram.
+Get live audio PCM stream data then can fft to frequency histogram for React Native. Ideal for drawing live music frequency histogram. Also support music wave surfer.
 
 This module is modified from [react-native-audio-record](https://github.com/goodatlas/react-native-audio-record). Instead of saving to an audio file, it only emit events with live data. By doing this, it can reduce memory usage and eliminate file operation overheads in the case that an audio file is not necessary (e.g. live transcribing).
 
@@ -33,7 +33,7 @@ Add the following line to ```android/app/src/main/AndroidManifest.xml```
 <uses-permission android:name="android.permission.RECORD_AUDIO" />
 ```
 
-## Usage
+## Usage of audio frequency histogram
 ```javascript
 import {PixelRatio, Platform} from 'react-native';
 import {GCanvasView} from '@flyskywhy/react-native-gcanvas';
@@ -137,6 +137,11 @@ LiveAudioStream.on('data', pcmDataBase64 => {
 More examples can ref to [GCanvasRNExamples](https://github.com/flyskywhy/GCanvasRNExamples).
 
 `audioSource` should be one of the constant values from [here](https://developer.android.com/reference/android/media/MediaRecorder.AudioSource). Default value is `6` (`VOICE_RECOGNITION`).
+
+## Usage of audio wave surfer
+Usage can ref to [Audio Wave Surfer](https://github.com/flyskywhy/GCanvasRNExamples/blob/master/app/components/AudioWaveSurfer.js), and here is the GIF:
+
+<img src="https://raw.githubusercontent.com/flyskywhy/GCanvasRNExamples/master/assets/AudioWaveSurfer.gif" width="480">
 
 ## Credits/References
 - [react-native-audio-record](https://github.com/goodatlas/react-native-audio-record)
