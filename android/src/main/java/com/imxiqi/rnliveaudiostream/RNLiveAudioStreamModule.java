@@ -25,7 +25,6 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
     public RNLiveAudioStreamModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
-        this.context = reactContext.getApplicationContext();;
     }
 
     @Override
@@ -70,23 +69,23 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
             bufferSize = Math.max(bufferSize, options.getInt("bufferSize"));
         }
 
-        recordThread = new RecordThread(audioSource, speakerPhoneOn, sampleRateInHz, channelConfig, audioFormat, bufferSize, reactContext, context);
+        recordThread = new RecordThread(audioSource, speakerPhoneOn, sampleRateInHz, channelConfig, audioFormat, bufferSize, reactContext);
     }
 
     private class RecordThread extends Thread {
 
         private DeviceEventManagerModule.RCTDeviceEventEmitter eventEmitter;
         private AudioRecord recorder = null;
-        private AudioManager audioManager3;
+        private AudioManager audioManager4;
         private int bufferSize;
         public boolean isRecording = false;
 
-        public RecordThread(int audioSource, boolean speakerPhoneOn, int sampleRateInHz, int channelConfig, int audioFormat, int bufferSize, ReactApplicationContext reactContext, Context context) {
+        public RecordThread(int audioSource, boolean speakerPhoneOn, int sampleRateInHz, int channelConfig, int audioFormat, int bufferSize, ReactApplicationContext reactContext) {
             super();
             if (speakerPhoneOn) {
-                AudioManager audioManager3 = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-                audioManager3.setMode(AudioManager.MODE_IN_COMMUNICATION); // Optional, to set the mode if needed
-                audioManager3.setSpeakerphoneOn(true);
+                AudioManager audioManager4 = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
+                audioManager4.setMode(AudioManager.MODE_IN_COMMUNICATION); // Optional, to set the mode if needed
+                audioManager4.setSpeakerphoneOn(true);
             }  
             eventEmitter = reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class);
 
