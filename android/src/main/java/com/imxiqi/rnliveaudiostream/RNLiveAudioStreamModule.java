@@ -82,9 +82,9 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
         public RecordThread(int audioSource, boolean speakerPhoneOn, int sampleRateInHz, int channelConfig, int audioFormat, int bufferSize, ReactApplicationContext reactContext) {
             super();
             if (speakerPhoneOn) {
-                AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-                audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION); // Optional, to set the mode if needed
-                audioManager.setSpeakerphoneOn(true);
+                AudioManager audioManager2 = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                audioManager2.setMode(AudioManager.MODE_IN_COMMUNICATION); // Optional, to set the mode if needed
+                audioManager2.setSpeakerphoneOn(true);
             }  
             eventEmitter = reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class);
 
