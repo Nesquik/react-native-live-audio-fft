@@ -25,7 +25,7 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
     public RNLiveAudioStreamModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
-        this.context = context;
+        this.context = reactContext.getApplicationContext();;
     }
 
     @Override
