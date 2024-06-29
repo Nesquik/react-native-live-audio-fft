@@ -1,6 +1,7 @@
 package com.imxiqi.rnliveaudiostream;
 
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.MediaRecorder.AudioSource;
 import android.util.Base64;
