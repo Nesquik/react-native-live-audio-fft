@@ -31,6 +31,11 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void init(ReadableMap options) {
+        boolean speakerPhoneOn = false;
+        if (options.hasKey("speakerPhoneOn")) {
+            speakerPhoneOn = true;
+        }
+
         int sampleRateInHz = 44100;
         if (options.hasKey("sampleRate")) {
             sampleRateInHz = options.getInt("sampleRate");
@@ -61,7 +66,7 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
             bufferSize = Math.max(bufferSize, options.getInt("bufferSize"));
         }
 
-        recordThread = new RecordThread(audioSource, sampleRateInHz, channelConfig, audioFormat, bufferSize, reactContext);
+        recordThread = new RecordThread(audioSource, speakerPhoneOn, sampleRateInHz, channelConfig, audioFormat, bufferSize, reactContext);
     }
 
     private class RecordThread extends Thread {
@@ -71,9 +76,13 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
         private int bufferSize;
         public boolean isRecording = false;
 
-        public RecordThread(int audioSource, int sampleRateInHz, int channelConfig, int audioFormat, int bufferSize, ReactApplicationContext reactContext) {
+        public RecordThread(int audioSource, boolean speakerPhoneOn, int sampleRateInHz, int channelConfig, int audioFormat, int bufferSize, ReactApplicationContext reactContext) {
             super();
-
+            if (speakerPhoneOn) {
+                AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION); // Optional, to set the mode if needed
+                audioManager.setSpeakerphoneOn(true);
+            }  
             eventEmitter = reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class);
 
             this.bufferSize = bufferSize;
