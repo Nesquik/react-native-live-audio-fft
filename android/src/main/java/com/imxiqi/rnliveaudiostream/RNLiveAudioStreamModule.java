@@ -75,6 +75,7 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
 
         private DeviceEventManagerModule.RCTDeviceEventEmitter eventEmitter;
         private AudioRecord recorder = null;
+        private AudioManager audioManager;
         private int bufferSize;
         public boolean isRecording = false;
 
