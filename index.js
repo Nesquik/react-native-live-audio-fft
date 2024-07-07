@@ -1,9 +1,13 @@
 import { NativeModules, NativeEventEmitter } from 'react-native';
 import atob from 'atob/node-atob.js';
 const { RNLiveAudioStream } = NativeModules;
-const EventEmitter = RNLiveAudioStream && new NativeEventEmitter(RNLiveAudioStream);
+const emitter = new NativeEventEmitter(RNLiveAudioStream);
 
-const AudioRecord = {};
+const AudioRecord = {
+  init: RNLiveAudioStream.init,
+  start: RNLiveAudioStream.start,
+  stop: RNLiveAudioStream.stop
+};
 
 AudioRecord.init = options => RNLiveAudioStream.init(options);
 AudioRecord.start = () => RNLiveAudioStream.start();
@@ -15,13 +19,15 @@ const eventsMap = {
 
 AudioRecord.on = (event, callback) => {
   const nativeEvent = eventsMap[event];
+
   if (!nativeEvent) {
     throw new Error('Invalid event');
   }
-  EventEmitter.removeAllListeners(nativeEvent);
-  return EventEmitter.addListener(nativeEvent, callback);
-};
 
+  emitter.removeAllListeners(nativeEvent);
+
+  return emitter.addListener(nativeEvent, callback);
+};
 export default AudioRecord;
 
 // ref to PowerLevel() in

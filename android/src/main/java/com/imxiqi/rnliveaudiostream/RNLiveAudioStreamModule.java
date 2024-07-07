@@ -14,6 +14,7 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
+
 import java.lang.Math;
 
 public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
@@ -82,11 +83,11 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
 
         public RecordThread(int audioSource, boolean speakerPhoneOn, int sampleRateInHz, int channelConfig, int audioFormat, int bufferSize, ReactApplicationContext reactContext) {
             super();
-            if (speakerPhoneOn) {
-                AudioManager audioManager4 = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
-                audioManager4.setMode(AudioManager.MODE_IN_COMMUNICATION); // Optional, to set the mode if needed
-                audioManager4.setSpeakerphoneOn(true);
-            }  
+            // if (speakerPhoneOn) {
+            //     AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
+            //     audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION); // Optional, to set the mode if needed
+            //     audioManager.setSpeakerphoneOn(true);
+            // }  
             eventEmitter = reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class);
 
             this.bufferSize = bufferSize;
@@ -138,5 +139,15 @@ public class RNLiveAudioStreamModule extends ReactContextBaseJavaModule {
             recordThread.isRecording = false;
             recordThread = null;
         }
+    }
+
+    @ReactMethod
+    public void addListener(String eventName) {
+        // Keep: Required for RN built in Event Emitter Calls.
+    }
+
+    @ReactMethod
+    public void removeListeners(Integer count) {
+        // Keep: Required for RN built in Event Emitter Calls.
     }
 }
